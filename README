@@ -59,6 +59,9 @@ RPM packaging macros
 
 Oneshot scripts should be installed into %{_oneshotdir}
 
+Packages using oneshot macros must BuildRequire oneshot as macros are
+located in the oneshot RPM package.
+
 Packages using oneshot functionality must Require oneshot, and use the
 %{_oneshot_requires_post} macro to add the necessary Requires(post) dependencies.
 
@@ -76,6 +79,7 @@ Example for adding a group for the default user in .spec file:
 
 %{_oneshot_groupadd_requires_pre}
 %{_oneshot_groupadd_requires_post}
+BuildRequires: oneshot
 Requires: oneshot
 
 %pre
@@ -89,6 +93,7 @@ Example for running a oneshot script in .spec file as user:
 -----------------------------------------------------------
 
 %{_oneshot_requires_post}
+BuildRequires: oneshot
 Requires: oneshot
 
 %post

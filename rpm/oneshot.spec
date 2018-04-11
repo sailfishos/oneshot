@@ -9,10 +9,10 @@ Release: 1
 Summary: Hooks run on first start
 BuildArch: noarch
 Group: System/Base
-License: GPLv2
+License: GPLv2+
 Source0: %{name}-%{version}.tar.gz
-URL: https://github.com/nemomobile/oneshot
-BuildRequires: qt5-qmake, grep, systemd
+URL: https://git.merproject.org/mer-core/oneshot
+BuildRequires: grep, systemd
 Requires: systemd-user-session-targets
 Requires(pre): /usr/bin/getent, /usr/sbin/groupadd
 Requires: /usr/bin/getent, /bin/ln, /bin/touch, /bin/sed, /bin/grep, /usr/sbin/usermod
@@ -51,20 +51,32 @@ Requires: /etc/login.defs
 %setup -q
 
 %build
-ls %{_builddir}/%{name}-%{version}/macros/
-BINDIR=%{_bindir} ONESHOTDIR=%{_oneshotdir} SERVICEDIR=%{_unitdir} USERSERVICEDIR=%{_libdir}/systemd/user qmake -qt=5
 
 %install
-make INSTALL_ROOT=%{buildroot} install
+install -d %{buildroot}%{_bindir}/
+install -m 755 scripts/* %{buildroot}%{_bindir}/
+
+install -d %{buildroot}%{_unitdir}/
+install -m 644 services/* %{buildroot}%{_unitdir}/
+
+install -d %{buildroot}%{_libdir}/systemd/user/
+install -m 644 services.usersession/* %{buildroot}%{_libdir}/systemd/user/
+
+install -d %{buildroot}%{_oneshotdir}/
+install -m 755 oneshot.d/* %{buildroot}%{_oneshotdir}/
+
+install -d %{buildroot}/etc/rpm/
+install -m 644 macros/* %{buildroot}/etc/rpm/
+
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/0/late
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/default/late
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/group.d/
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/preinit/
 
-mkdir -p %{buildroot}%{_unitdir}/multi-user.target.wants
-mkdir -p %{buildroot}%{_unitdir}/graphical.target.wants
-mkdir -p %{buildroot}%{_libdir}/systemd/user/pre-user-session.target.wants
-mkdir -p %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants
+install -d %{buildroot}%{_unitdir}/multi-user.target.wants
+install -d %{buildroot}%{_unitdir}/graphical.target.wants
+install -d %{buildroot}%{_libdir}/systemd/user/pre-user-session.target.wants
+install -d %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants
 ln -sf ../oneshot-root.service %{buildroot}%{_unitdir}/multi-user.target.wants/
 ln -sf ../oneshot-root-late.service %{buildroot}%{_unitdir}/graphical.target.wants/
 ln -sf ../oneshot-user.service %{buildroot}%{_libdir}/systemd/user/pre-user-session.target.wants/

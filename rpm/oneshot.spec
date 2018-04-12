@@ -17,6 +17,8 @@ Requires: systemd-user-session-targets
 Requires(pre): /usr/bin/getent, /usr/sbin/groupadd
 Requires: /usr/bin/getent, /bin/ln, /bin/touch, /bin/sed, /bin/grep, /usr/sbin/usermod
 Requires: /etc/login.defs
+# scripts/oneshot using find
+Requires: findutils
 
 %description
 %{summary}.

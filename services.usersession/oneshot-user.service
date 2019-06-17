@@ -1,6 +1,7 @@
 [Unit]
 Description=Oneshot stuff for user
 Requires=dbus.socket
+RequiresMountsFor=/home
 
 [Service]
 Type=oneshot
@@ -9,4 +10,3 @@ ExecStart=/usr/bin/oneshot
 
 [Install]
 WantedBy=pre-user-session.target
-

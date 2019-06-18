@@ -1,6 +1,7 @@
 [Unit]
 Description=Oneshot stuff for user (late run)
 After=user-session.target
+RequiresMountsFor=/home
 
 [Service]
 Type=oneshot
@@ -9,4 +10,3 @@ ExecStart=/usr/bin/oneshot --late
 
 [Install]
 WantedBy=post-user-session.target
-

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Copyright (C) 2012 Jolla Oy
-# Contact: Pekka Lundstrom  <pekka.lundstrom@jollamobile.com>
+# Copyright (c) 2012 - 2019 Jolla Ltd.
+# Copyright (c) 2019 Open Mobile Platform LLC.
 #
 # Run all oneshot scripts indicated by links and after
 # successful run remove the link

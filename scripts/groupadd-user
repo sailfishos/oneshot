@@ -1,10 +1,10 @@
 #!/bin/sh
-# Copyright (C) 2012 Jolla Oy
-# Contact: Pekka Lundstrom  <pekka.lundstrom@jollamobile.com>
+# Copyright (c) 2012 - 2019 Jolla Ltd.
+# Copyright (c) 2019 Open Mobile Platform LLC.
 #
-# This adds default user (1000) to group provided as $1
+# This adds current user to group provided as $1
 # Group needs to exist before calling this
-# If user with default id does not exist, this will schedule
+# If user is not found, this will schedule
 # new run after next boot
 # This script can also be called with $2 as --no-later
 # then later scheduling is not done
@@ -19,8 +19,7 @@ if [ -z "$PATH" ] ||
 fi
 
 getent group $GROUP > /dev/null || exit 2
-DEF_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f2)
-DEVICEUSER=$(getent passwd $DEF_UID | sed 's/:.*//')
+DEVICEUSER=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 4)
 if [ -n "$DEVICEUSER" ]; then
     getent group $GROUP | grep -q $DEVICEUSER && exit 0
     usermod -G $GROUP -a $DEVICEUSER && exit 0

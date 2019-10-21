@@ -1,6 +1,5 @@
 # we can't use %include for files in the source tarballs, so redefine the macros for now
 %define _oneshotdir %{_libdir}/oneshot.d
-%define _default_uid %(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f2)
 %define _system_groupadd() getent group %{1} >/dev/null || groupadd -r %{1}
 
 Name: oneshot
@@ -14,11 +13,15 @@ Source0: %{name}-%{version}.tar.gz
 URL: https://git.merproject.org/mer-core/oneshot
 BuildRequires: grep, systemd
 Requires: systemd-user-session-targets
-Requires(pre): /usr/bin/getent, /usr/sbin/groupadd
-Requires: /usr/bin/getent, /bin/ln, /bin/touch, /bin/sed, /bin/grep, /usr/sbin/usermod
-Requires: /etc/login.defs
-# scripts/oneshot using find
+Requires(pre): glibc-common
+Requires(pre): shadow-utils
+Requires: glibc-common
+Requires: sed
+Requires: grep
+Requires: shadow-utils
+Requires: coreutils
 Requires: findutils
+Requires: systemd
 
 %description
 %{summary}.
@@ -29,10 +32,6 @@ Requires: findutils
 %attr (755, -, -) %{_bindir}/*
 %{_sysconfdir}/oneshot.d/
 %dir %{_sysconfdir}/oneshot.d/
-%dir %{_sysconfdir}/oneshot.d/0
-%dir %{_sysconfdir}/oneshot.d/0/late
-%dir %attr(775, -, oneshot) %{_sysconfdir}/oneshot.d/default/
-%dir %attr(775, -, oneshot) %{_sysconfdir}/oneshot.d/default/late
 %dir %{_sysconfdir}/oneshot.d/group.d
 %dir %{_sysconfdir}/oneshot.d/preinit
 %dir %{_oneshotdir}
@@ -70,8 +69,6 @@ install -m 755 oneshot.d/* %{buildroot}%{_oneshotdir}/
 install -d %{buildroot}/etc/rpm/
 install -m 644 macros/* %{buildroot}/etc/rpm/
 
-install -d %{buildroot}%{_sysconfdir}/oneshot.d/0/late
-install -d %{buildroot}%{_sysconfdir}/oneshot.d/default/late
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/group.d/
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/preinit/
 
@@ -83,8 +80,6 @@ ln -sf ../oneshot-root.service %{buildroot}%{_unitdir}/multi-user.target.wants/
 ln -sf ../oneshot-root-late.service %{buildroot}%{_unitdir}/graphical.target.wants/
 ln -sf ../oneshot-user.service %{buildroot}%{_libdir}/systemd/user/pre-user-session.target.wants/
 ln -sf ../oneshot-user-late.service %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants/
-ln -sf ./default %{buildroot}%{_sysconfdir}/oneshot.d/%{_default_uid}
-
 
 %post
 %{_bindir}/groupadd-user oneshot

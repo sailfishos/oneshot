@@ -1,17 +1,50 @@
 #!/bin/sh
-# Copyright (C) 2012 Jolla Oy
-# Contact: Pekka Lundstrom  <pekka.lundstrom@jollamobile.com>
+# Copyright (c) 2012 - 2019 Jolla Ltd.
+# Copyright (c) 2019 Open Mobile Platform LLC.
 #
 # This adds oneshot job to be run later or now
-USAGE="usage: add-oneshot [--now] [--late] [--user] <name of the job> [<more job names>]"
+USAGE="usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] <name of the job> [<more job names>]"
 # If --now is given, job is run immediately instead of postponing it later
 # If instant run fails or if --now is not given, the link is created for later run
-# If --user is given, job is run as user, otherwise as root
+# If --user is given, job is run as current user, otherwise as root
+# If --all-users is given then the job is ran for all users
+# If --uid <uid> is given then that user is used to run the job
 # If --late is given then job is run after first boot is over (after init-done)
 # Without --late or --now job is run at the very beginning of the boot
 # Job name is given as name of the executable located in /usr/lib/oneshot.d
 # ie. no path mentioned
 
+run_as_user() {
+    su -l $1 /usr/lib/oneshot.d/$2 && RUN_OK="1"
+}
+
+save_job() {
+    SAVE_OK=""
+    mkdir -p /etc/oneshot.d/$2
+    ln -sf /usr/lib/oneshot.d/$1 /etc/oneshot.d/$2 && SAVE_OK="1"
+    if [ -n "$SAVE_OK" ]; then
+        echo "add-oneshot: /etc/oneshot.d/$2/$1 - job saved OK"
+        if [ -n "$3" ]; then
+            # Change ownership so user can remove the link after running
+            chown $3:$3 /etc/oneshot.d/$2
+            chown -h $3:$3 /etc/oneshot.d/$2/$1
+        fi
+    else
+        echo "add-oneshot: /etc/oneshot.d/$2/$1 - job saving FAILED"
+    fi
+}
+
+run_for_all() {
+    USERS=$(getent group users | cut -d ":" -f 4 | tr "," "\n")
+    for u in $USERS; do
+        RUN_OK=""
+        run_as_user $u $1
+        if [ -z "$RUN_OK" ]; then
+            USER_UID=$(getent passwd $u | cut -d ":" -f 3)
+            save_job $1 $USER_UID $u
+        fi
+    done
+}
 
 [ -z "$1" ] && echo $USAGE && exit 1
 
@@ -25,11 +58,15 @@ set +e
 RUN_NOW=""
 AS_USER=""
 LATE_RUN=""
+ALL_USERS=""
+USER_UID=""
 
 while [ -n "$1" ]; do
     [ "$1" == "--now" ] && RUN_NOW=1 && shift && continue
     [ "$1" == "--user" ] && AS_USER=1 && shift && continue
     [ "$1" == "--late" ] && LATE_RUN=1 && shift && continue
+    [ "$1" == "--all-users" ] && ALL_USERS=1 && shift && continue
+    [ "$1" = "--uid" ] && shift && USER_UID=$1 && shift && continue
     # skip execution when called during bootstrap
     [ -f "/.bootstrap" ] && RUN_NOW=
     JOB=$1
@@ -38,14 +75,29 @@ while [ -n "$1" ]; do
     if [ -n "$RUN_NOW" ]; then
         RUN_OK=""
         # Job is wanted to be run right now
-        if [ -n "$AS_USER" ]; then
-            # Run as user (find out correct user name)
-            DEF_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f2)
-            DEVICEUSER=$(getent passwd $DEF_UID | sed 's/:.*//')
-            [ -n "$DEVICEUSER" ] && su -l $DEVICEUSER /usr/lib/oneshot.d/$JOB && RUN_OK="1"
+        if [ -n "$ALL_USERS" ]; then
+            # Run for all users
+            run_for_all $JOB
         else
-            # run as root
-            /usr/lib/oneshot.d/$JOB && RUN_OK="1"
+            DEVICEUSER=""
+            if [ -n "$AS_USER" ]; then
+                # Run as user (find out correct user name)
+                DEVICEUSER=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 4)
+                if [ -z "$DEVICEUSER" ]; then
+                    # Fall back to the default user
+                    DEF_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f 2)
+                    DEVICEUSER=$(getent passwd $DEF_UID | sed 's/:.*//')
+                fi
+            elif [ -n "$USER_UID" ]; then
+                # Run with the specified user
+                DEVICEUSER=$(getent passwd $USER_UID | sed 's/:.*//')
+            fi
+            if [ -n "$DEVICEUSER" ]; then
+                run_as_user $DEVICEUSER $JOB
+            else
+                # run as root
+                /usr/lib/oneshot.d/$JOB && RUN_OK="1"
+            fi
         fi
 
         if [ -n "$RUN_OK" ]; then
@@ -58,15 +110,28 @@ while [ -n "$1" ]; do
 
     # Either --now was not defined or our run failed
     # Create link so we run this job later
-    LOCATION=0
-    [ -n "$AS_USER" ] && LOCATION=default
-    [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
-    SAVE_OK=""
-    ln -sf /usr/lib/oneshot.d/$JOB /etc/oneshot.d/$LOCATION && SAVE_OK="1"
-    if [ -n "$SAVE_OK" ]; then
-        echo "add-oneshot: /etc/oneshot.d/$LOCATION/$JOB - job saved OK"
+    if [ -n "$ALL_USERS" ]; then
+        USERS=$(getent group users | cut -d ":" -f 4 | tr "," "\n")
+        for u in $USERS; do
+            LOCATION=$(getent passwd $u | cut -d ":" -f 3)
+            [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
+            save_job $JOB $LOCATION $u
+        done
     else
-        echo "add-oneshot: /etc/oneshot.d/$LOCATION/$JOB - job saving FAILED"
+        if [ -n "$AS_USER" ]; then
+            USER_UID=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 3)
+            [ -z "$USER_UID" ] && USER_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f 2)
+            LOCATION=$USER_UID
+            USER_NAME=$(getent passwd $USER_UID | cut -d ":" -f 1)
+        elif [ -n "$USER_UID" ]; then
+            LOCATION=$USER_UID
+            USER_NAME=$(getent passwd $USER_UID | cut -d ":" -f 1)
+        else
+            LOCATION="0"
+            USER_NAME="root"
+        fi
+        [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
+        save_job $JOB $LOCATION $USER_NAME
     fi
     shift
 done

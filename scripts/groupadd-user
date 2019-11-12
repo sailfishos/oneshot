@@ -28,4 +28,5 @@ fi
 # We couldn't add group for the user at this time. We schedule it for next boot
 [ -n "$2" ] && [ "$2" == "--no-later" ] && exit 0
 touch /etc/oneshot.d/group.d/$GROUP
+mkdir -p /etc/oneshot.d/0
 ln -sf /usr/lib/oneshot.d/groupadd-user.later /etc/oneshot.d/0/

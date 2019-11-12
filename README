@@ -10,9 +10,9 @@ as root. This happens before user session is started.
 Links should be only created through the add-oneshot utility described in the
 next section.
 
-Links created to /etc/oneshot.d/default/ (or /etc/oneshot.d/1000/, which is a
-link to default) get executed during next boot at the very beginning of the
-user session and will be executed as normal user (nemo).
+Links created to /etc/oneshot.d/<UID>/ get executed during next boot at the
+very beginning of the user session and will be executed as the user specifed by
+the UID.
 
 oneshot
 -------
@@ -30,11 +30,13 @@ add-oneshot
 
 Adds a oneshot job to be run later or now.
 
-Usage: add-oneshot [--now] [--late] [--user] <name of the job> [<more job names>]
+Usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] <name of the job> [<more job names>]
 
 If --now is given, job is run immediately instead of postponing it later
 If instant run fails or if --now is not given, the link is created for later run
-If --user is given, job is run as user, otherwise as root
+If --user is given, job is run as current user, otherwise as root
+If --all-users is given then the job is ran for all users
+If --uid <uid> is given then that user is used to run the job
 If --late is given then job is run after first boot is over (after init-done)
 Without --late or --now job is run at the very beginning of the boot
 Job name is given as name of the executable located in /usr/lib/oneshot.d ie.
@@ -44,8 +46,8 @@ no path mentioned
 groupadd-user
 -------------
 
-Packages can create new groups and request that the default user (usually UID
-1000, nemo) should be added to that group. They can do this by calling
+Packages can create new groups and request that the current user should be
+added to that group. They can do this by calling 
 /usr/bin/groupadd-user <groupname>, it will add the default user (looked up
 from login.defs and passwd) to that group if possible.
 

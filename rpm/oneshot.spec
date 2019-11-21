@@ -1,6 +1,5 @@
 # we can't use %include for files in the source tarballs, so redefine the macros for now
 %define _oneshotdir %{_libdir}/oneshot.d
-%define _system_groupadd() getent group %{1} >/dev/null || groupadd -r %{1}
 
 Name: oneshot
 Version: 0.3.1
@@ -15,6 +14,8 @@ BuildRequires: grep, systemd
 Requires: systemd-user-session-targets
 Requires(pre): glibc-common
 Requires(pre): shadow-utils
+Requires(pre): sailfish-setup >= 0.1.11
+Requires: sailfish-setup >= 0.1.11
 Requires: glibc-common
 Requires: sed
 Requires: grep
@@ -44,9 +45,6 @@ Requires: systemd
 %{_unitdir}/oneshot-root-late.service
 %{_unitdir}/multi-user.target.wants/oneshot-root.service
 %{_unitdir}/graphical.target.wants/oneshot-root-late.service
-
-%pre
-%_system_groupadd oneshot
 
 %prep
 %setup -q
@@ -81,5 +79,3 @@ ln -sf ../oneshot-root-late.service %{buildroot}%{_unitdir}/graphical.target.wan
 ln -sf ../oneshot-user.service %{buildroot}%{_libdir}/systemd/user/pre-user-session.target.wants/
 ln -sf ../oneshot-user-late.service %{buildroot}%{_libdir}/systemd/user/post-user-session.target.wants/
 
-%post
-%{_bindir}/groupadd-user oneshot

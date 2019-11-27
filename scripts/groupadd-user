@@ -19,8 +19,14 @@ if [ -z "$PATH" ] ||
 fi
 
 getent group $GROUP > /dev/null || exit 2
-DEVICEUSER=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 4)
+if [ -f "/.bootstrap" ]; then
+    DEF_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f2)
+    DEVICEUSER=$(getent passwd $DEF_UID | sed 's/:.*//')
+else
+    DEVICEUSER=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 4)
+fi
 if [ -n "$DEVICEUSER" ]; then
+    [ -f "/.bootstrap" ] && echo "Bootstrap: Adding user $DEVICEUSER to group $GROUP"
     getent group $GROUP | grep -q $DEVICEUSER && exit 0
     usermod -G $GROUP -a $DEVICEUSER && exit 0
 fi

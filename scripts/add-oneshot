@@ -1,16 +1,21 @@
 #!/bin/sh
 # Copyright (c) 2012 - 2019 Jolla Ltd.
-# Copyright (c) 2019 Open Mobile Platform LLC.
+# Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 #
 # This adds oneshot job to be run later or now
-USAGE="usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] <name of the job> [<more job names>]"
+usage() {
+    echo "usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] <name of the job> [<more job names>]"
+    echo "or:    add-oneshot --new-users [--all-users] [--late] <name of the job> [<more job names>]"
+    exit 1
+}
 # If --now is given, job is run immediately instead of postponing it later
 # If instant run fails or if --now is not given, the link is created for later run
 # If --user is given, job is run as current user, otherwise as root
 # If --all-users is given then the job is ran for all users
+# If --new-users is given then the job is ran for each newly created user
 # If --uid <uid> is given then that user is used to run the job
 # If --late is given then job is run after first boot is over (after init-done)
-# Without --late or --now job is run at the very beginning of the boot
+# Without --late or --now job is run at the very beginning of the boot or user session
 # Job name is given as name of the executable located in /usr/lib/oneshot.d
 # ie. no path mentioned
 
@@ -46,7 +51,7 @@ run_for_all() {
     done
 }
 
-[ -z "$1" ] && echo $USAGE && exit 1
+[ -z "$1" ] && usage
 
 # Define PATH in case we are called in build time (PATH empty or sbin not included)
 if [ -z "$PATH" ] ||
@@ -59,6 +64,7 @@ RUN_NOW=""
 AS_USER=""
 LATE_RUN=""
 ALL_USERS=""
+NEW_USERS=""
 USER_UID=""
 
 while [ -n "$1" ]; do
@@ -66,13 +72,20 @@ while [ -n "$1" ]; do
     [ "$1" == "--user" ] && AS_USER=1 && shift && continue
     [ "$1" == "--late" ] && LATE_RUN=1 && shift && continue
     [ "$1" == "--all-users" ] && ALL_USERS=1 && shift && continue
-    [ "$1" = "--uid" ] && shift && USER_UID=$1 && shift && continue
+    [ "$1" == "--new-users" ] && NEW_USERS=1 && shift && continue
+    [ "$1" == "--uid" ] && shift && USER_UID=$1 && shift && continue
     # skip execution when called during bootstrap
     [ -f "/.bootstrap" ] && RUN_NOW=
     JOB=$1
     # Job must be located in oneshot dir and must be ok to run it
     [ ! -x /usr/lib/oneshot.d/$JOB ] && echo "add-oneshot: /usr/lib/oneshot.d/$JOB does not exist - FAIL" && exit 2
-    if [ -n "$RUN_NOW" ]; then
+
+    if [ -n "$NEW_USERS" ]; then
+        # Job must be run for each newly created user
+        LOCATION="newuser"
+        [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
+        save_job $JOB $LOCATION
+    elif [ -n "$RUN_NOW" ]; then
         RUN_OK=""
         # Job is wanted to be run right now
         if [ -n "$ALL_USERS" ]; then
@@ -117,7 +130,8 @@ while [ -n "$1" ]; do
             [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
             save_job $JOB $LOCATION $u
         done
-    else
+    # Only --all-users can follow --new-users
+    elif [ -z "$NEW_USERS" ] ; then
         if [ -n "$AS_USER" ]; then
             USER_UID=$(loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 3)
             [ -z "$USER_UID" ] && USER_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f 2)

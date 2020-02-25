@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2012 - 2019 Jolla Ltd.
-# Copyright (c) 2019 Open Mobile Platform LLC.
+# Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 #
 # Run all oneshot scripts indicated by links and after
 # successful run remove the link
@@ -16,7 +16,7 @@ fi
 LATEDIR=""
 [ "$1" == "--late" ] && LATEDIR="late/"
 
-if [ "$1" = "--mic" ]; then
+if [ "$1" == "--mic" ]; then
     [ -f "/.bootstrap" ] && echo "/.bootstrap exists while running in mic-mode, which is probably not what you want"
     export MIC_RUN=1
     if [ $UID -eq 0 ]; then
@@ -33,7 +33,7 @@ for SCRIPTLET in $LINKS; do
     if [ -e $SCRIPTLET ]; then
         $SCRIPTLET && rm $SCRIPTLET && echo "oneshot: $SCRIPTLET - OK" || echo "oneshot: $SCRIPTLET - FAIL"
     else
-        rm $SCRIPTLET && echo "oneshot: '$SCRIPTLET' pointed to non-existend file. Removing link." || echo "oneshot: failed to remove $SCRIPTLET"
+        rm $SCRIPTLET && echo "oneshot: '$SCRIPTLET' pointed to non-existent file. Removing link." || echo "oneshot: failed to remove $SCRIPTLET"
     fi
 done
 exit 0

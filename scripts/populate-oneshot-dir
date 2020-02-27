@@ -1,0 +1,20 @@
+#!/bin/sh
+# Copyright (c) 2020 Open Mobile Platform LLC.
+#
+# Populate oneshot directory for new user
+
+set -e
+USERID="$1"
+if [ -z "$USERID" ]; then
+    echo "usage: $0 <USERID>"
+    exit 1
+fi
+
+if [ -e /etc/oneshot.d/$USERID ]; then
+    echo "/etc/oneshot.d/$USERID exists. Can not create"
+    exit 1
+fi
+
+cp -rd /etc/oneshot.d/newuser /etc/oneshot.d/$USERID
+chown -R $USERID:$USERID /etc/oneshot.d/$USERID
+exit 0

@@ -7,12 +7,15 @@ a script to be run at next boot by creating a link to /etc/oneshot.d/<uid>/
 Links created to /etc/oneshot.d/0/ get run at the beginning of the next boot
 as root. This happens before user session is started.
 
-Links should be only created through the add-oneshot utility described in the
-next section.
-
 Links created to /etc/oneshot.d/<UID>/ get executed during next boot at the
 very beginning of the user session and will be executed as the user specifed by
 the UID.
+
+Links created to /etc/oneshot.d/newuser/ will be added to user's oneshot
+directory after user creation.
+
+Links should be only created through the add-oneshot utility described in the
+next section.
 
 oneshot
 -------
@@ -30,18 +33,30 @@ add-oneshot
 
 Adds a oneshot job to be run later or now.
 
-Usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] <name of the job> [<more job names>]
+Usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] [--] <name of the job> [<more job names>]
+or:    add-oneshot --new-users [--all-users] [--late] [--] <name of the job> [<more job names>]
 
 If --now is given, job is run immediately instead of postponing it later
 If instant run fails or if --now is not given, the link is created for later run
 If --user is given, job is run as current user, otherwise as root
 If --all-users is given then the job is ran for all users
+If --new-users is given then the job is ran for each newly created user
 If --uid <uid> is given then that user is used to run the job
 If --late is given then job is run after first boot is over (after init-done)
-Without --late or --now job is run at the very beginning of the boot
-Job name is given as name of the executable located in /usr/lib/oneshot.d ie.
-no path mentioned
+Without --late or --now job is run at the very beginning of the boot or user session
+Job names must follow options and you may use -- to specify files beginning with --
+Job name is given as name of the executable located in /usr/lib/oneshot.d
+ie. no path mentioned
 
+It's almost always wrong to use --user in packaging and it's rarely the right
+thing to use --uid <uid>. You should use --all-users possibly with --new-users
+instead.
+
+populate-oneshot-dir
+--------------------
+
+Populates oneshot directory for new user. This needs to be run when a new user
+is created.
 
 groupadd-user
 -------------

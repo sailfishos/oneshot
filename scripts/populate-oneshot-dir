@@ -10,11 +10,7 @@ if [ -z "$USERID" ]; then
     exit 1
 fi
 
-if [ -e /etc/oneshot.d/$USERID ]; then
-    echo "/etc/oneshot.d/$USERID exists. Can not create"
-    exit 1
-fi
-
-cp -rd /etc/oneshot.d/newuser /etc/oneshot.d/$USERID
+[ ! -e /etc/oneshot.d/$USERID ] && mkdir /etc/oneshot.d/$USERID
+cp -rdf /etc/oneshot.d/newuser/* /etc/oneshot.d/$USERID/
 chown -R $USERID:$USERID /etc/oneshot.d/$USERID
 exit 0

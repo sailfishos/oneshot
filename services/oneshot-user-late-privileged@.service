@@ -1,0 +1,17 @@
+# Copyright (c) 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
+#
+# Late trigger for privileged user oneshots
+
+[Unit]
+Description=Oneshot stuff for privileged user (late run)
+After=init-done.service systemd-user-sessions.service
+Requires=dbus.socket
+RequiresMountsFor=/home
+
+[Service]
+Type=oneshot
+User=%i
+Group=privileged
+RemainAfterExit=yes
+ExecStart=/usr/bin/oneshot --late

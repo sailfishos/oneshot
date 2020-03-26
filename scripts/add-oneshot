@@ -4,8 +4,8 @@
 #
 # This adds oneshot job to be run later or now
 usage() {
-    echo "usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] [--] <name of the job> [<more job names>]"
-    echo "or:    add-oneshot --new-users [--all-users] [--late] [--] <name of the job> [<more job names>]"
+    echo "usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] [--privileged] [--] <name of the job> [<more job names>]"
+    echo "or:    add-oneshot --new-users [--all-users] [--late] [--privileged] [--] <name of the job> [<more job names>]"
     exit 1
 }
 # If --now is given, job is run immediately instead of postponing it later
@@ -15,25 +15,36 @@ usage() {
 # If --new-users is given then the job is ran for each newly created user
 # If --uid <uid> is given then that user is used to run the job
 # If --late is given then job is run after first boot is over (after init-done)
+# If --privileged is given, job is run in privileged group (unless run as root)
 # Without --late or --now job is run at the very beginning of the boot or user session
 # Job names must follow options and you may use -- to specify files beginning with --
 # Job name is given as name of the executable located in /usr/lib/oneshot.d
 # ie. no path mentioned
 
 run_as_user() {
-    su -l $1 /usr/lib/oneshot.d/$2 && RUN_OK="1"
+    GROUP_PARAMS=""
+    [ -n "$GROUP" ] && [ "$1" != "root" ] && GROUP_PARAMS="-g $GROUP"
+    su -l $1 $GROUP_PARAMS /usr/lib/oneshot.d/$2 && RUN_OK="1"
 }
 
 save_job() {
     SAVE_OK=""
-    mkdir -p /etc/oneshot.d/$2
-    ln -sf /usr/lib/oneshot.d/$1 /etc/oneshot.d/$2 && SAVE_OK="1"
+    FOLDER=$2
+    [ -n "$4" ] && FOLDER=${FOLDER}/$4
+
+    mkdir -p /etc/oneshot.d/$FOLDER
+    ln -sf /usr/lib/oneshot.d/$1 /etc/oneshot.d/$FOLDER && SAVE_OK="1"
     if [ -n "$SAVE_OK" ]; then
-        echo "add-oneshot: /etc/oneshot.d/$2/$1 - job saved OK"
+        echo "add-oneshot: /etc/oneshot.d/$FOLDER/$1 - job saved OK"
         if [ -n "$3" ]; then
             # Change ownership so user can remove the link after running
             chown $3:$3 /etc/oneshot.d/$2
-            chown -h $3:$3 /etc/oneshot.d/$2/$1
+            # If privileged, ensure only privileged user can remove it
+            if [ -n "$4" ]; then
+                chown $4:$4 /etc/oneshot.d/$FOLDER
+                chmod 775 /etc/oneshot.d/$FOLDER
+            fi
+            chown -h $3:$3 /etc/oneshot.d/$FOLDER/$1
         fi
     else
         echo "add-oneshot: /etc/oneshot.d/$2/$1 - job saving FAILED"
@@ -47,7 +58,7 @@ run_for_all() {
         run_as_user $u $1
         if [ -z "$RUN_OK" ]; then
             USER_UID=$(getent passwd $u | cut -d ":" -f 3)
-            save_job $1 $USER_UID $u
+            save_job $1 $USER_UID $u $GROUP
         fi
     done
 }
@@ -64,6 +75,7 @@ LATE_RUN=""
 ALL_USERS=""
 NEW_USERS=""
 USER_UID=""
+GROUP=""
 
 while [ -n "$1" ]; do
     case "$1" in
@@ -72,6 +84,7 @@ while [ -n "$1" ]; do
         "--late") LATE_RUN=1 ;;
         "--all-users") ALL_USERS=1 ;;
         "--new-users") NEW_USERS=1 ;;
+        "--privileged") GROUP="privileged" ;;
         "--uid") shift ; USER_UID=$1 ;;
         "--"?*) # Catch wrong arguments
             echo "add-oneshot: wrong argument: $1"
@@ -99,6 +112,7 @@ while [ -n "$1" ]; do
         # Job must be run for each newly created user
         LOCATION="newuser"
         [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
+        [ -n "$GROUP" ] && LOCATION=${LOCATION}/${GROUP}
         save_job $JOB $LOCATION
     elif [ -n "$RUN_NOW" ]; then
         RUN_OK=""
@@ -143,7 +157,7 @@ while [ -n "$1" ]; do
         for u in $USERS; do
             LOCATION=$(getent passwd $u | cut -d ":" -f 3)
             [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
-            save_job $JOB $LOCATION $u
+            save_job $JOB $LOCATION $u $GROUP
         done
     # Only --all-users can follow --new-users
     elif [ -z "$NEW_USERS" ] ; then
@@ -160,7 +174,8 @@ while [ -n "$1" ]; do
             USER_NAME="root"
         fi
         [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
-        save_job $JOB $LOCATION $USER_NAME
+        [ "$USER_NAME" == "root" ] && GROUP=""
+        save_job $JOB $LOCATION $USER_NAME $GROUP
     fi
     shift
 done

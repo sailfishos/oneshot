@@ -13,4 +13,14 @@ fi
 [ ! -e /etc/oneshot.d/$USERID ] && mkdir /etc/oneshot.d/$USERID
 cp -rdf /etc/oneshot.d/newuser/* /etc/oneshot.d/$USERID/
 chown -R $USERID:$USERID /etc/oneshot.d/$USERID
+
+if [ -e /etc/oneshot.d/$USERID/privileged ]; then
+    chown privileged:privileged /etc/oneshot.d/$USERID/privileged
+    chmod 775 /etc/oneshot.d/$USERID/privileged
+fi
+
+if [ -e /etc/oneshot.d/$USERID/late/privileged ]; then
+    chown privileged:privileged /etc/oneshot.d/$USERID/late/privileged
+    chmod 775 /etc/oneshot.d/$USERID/late/privileged
+fi
 exit 0

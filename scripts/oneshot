@@ -12,9 +12,11 @@ if [ -z "$PATH" ] ||
 fi
 
 [ -z "$USER" ] && export USER=`id -u -n`
+[ -z "$GROUP" ] && export GROUP=`id -g -n`
 
-LATEDIR=""
-[ "$1" == "--late" ] && LATEDIR="late/"
+SUBDIR=""
+[ "$1" == "--late" ] && SUBDIR=${SUBDIR}late/
+[ "$GROUP" == "privileged" ] && SUBDIR=${SUBDIR}privileged/
 
 if [ "$1" == "--mic" ]; then
     [ -f "/.bootstrap" ] && echo "/.bootstrap exists while running in mic-mode, which is probably not what you want"
@@ -28,7 +30,7 @@ if [ "$1" == "--mic" ]; then
 fi
 
 set +e
-LINKS=$(find /etc/oneshot.d/$UID/$LATEDIR -maxdepth 1 -type l | sort)
+LINKS=$(find /etc/oneshot.d/$UID/$SUBDIR -maxdepth 1 -type l | sort)
 for SCRIPTLET in $LINKS; do
     if [ -e $SCRIPTLET ]; then
         $SCRIPTLET && rm $SCRIPTLET && echo "oneshot: $SCRIPTLET - OK" || echo "oneshot: $SCRIPTLET - FAIL"

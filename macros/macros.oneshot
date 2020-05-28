@@ -3,4 +3,5 @@
 %_oneshot_groupadd_requires_pre %_oneshot_requires_pre
 %_oneshot_groupadd_requires_post %_oneshot_requires_post, /usr/sbin/groupadd, /usr/bin/groupadd-user
 
-%_oneshotdir %{_libdir}/oneshot.d
+# We hardcode lib here as it doesn't depend on arch
+%_oneshotdir %{_prefix}/lib/oneshot.d

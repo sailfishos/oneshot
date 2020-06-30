@@ -64,8 +64,7 @@ run_for_all() {
 }
 
 # Define PATH in case we are called in build time (PATH empty or sbin not included)
-if [ -z "$PATH" ] ||
-   [[ "$PATH" != *sbin* ]]; then
+if [ -z "$PATH" ] || echo "$PATH" | grep -q sbin; then
     PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
 fi
 
@@ -174,7 +173,7 @@ while [ -n "$1" ]; do
             USER_NAME="root"
         fi
         [ -n "$LATE_RUN" ] && LOCATION=${LOCATION}/late
-        [ "$USER_NAME" == "root" ] && GROUP=""
+        [ "$USER_NAME" = "root" ] && GROUP=""
         save_job $JOB $LOCATION $USER_NAME $GROUP
     fi
     shift

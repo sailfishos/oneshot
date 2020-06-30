@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2012 - 2019 Jolla Ltd.
-# Copyright (c) 2019 Open Mobile Platform LLC.
+# Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 #
 # This adds current user to group provided as $1
 # Group needs to exist before calling this
@@ -13,8 +13,7 @@
 GROUP=$1
 
 # Define PATH in case we are called in build time (PATH empty or sbin not included)
-if [ -z "$PATH" ] || 
-   [[ "$PATH" != *sbin* ]]; then
+if [ -z "$PATH" ] || echo "$PATH" | grep -q sbin; then
     PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
 fi
 
@@ -32,7 +31,7 @@ if [ -n "$DEVICEUSER" ]; then
 fi
 
 # We couldn't add group for the user at this time. We schedule it for next boot
-[ -n "$2" ] && [ "$2" == "--no-later" ] && exit 0
+[ -n "$2" ] && [ "$2" = "--no-later" ] && exit 0
 touch /etc/oneshot.d/group.d/$GROUP
 mkdir -p /etc/oneshot.d/0
 ln -sf /usr/lib/oneshot.d/groupadd-user.later /etc/oneshot.d/0/

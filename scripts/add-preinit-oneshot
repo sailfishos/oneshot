@@ -1,6 +1,6 @@
 #!/bin/sh
-# Copyright (C) 2013 Jolla Oy
-# Contact: Pekka Lundstrom  <pekka.lundstrom@jollamobile.com>
+# Copyright (c) 2013 - 2020 Jolla Ltd.
+# Copyright (c) 2020 Open Mobile Platform LLC.
 #
 # This adds oneshot job to be run durint preinit
 # usage: add-oneshot <path-of-your-script> [<more paths>]
@@ -9,8 +9,7 @@
 [ -z "$1" ] && echo "add-preinit-oneshot: No jobs defined - FAIL" && exit 1
 
 # Define PATH in case we are called in build time (PATH empty or sbin not included)
-if [ -z "$PATH" ] ||
-   [[ "$PATH" != *sbin* ]]; then
+if [ -z "$PATH" ] || echo "$PATH" | grep -q sbin; then
     PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
 fi
 

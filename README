@@ -33,8 +33,8 @@ add-oneshot
 
 Adds a oneshot job to be run later or now.
 
-Usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] [--] <name of the job> [<more job names>]
-or:    add-oneshot --new-users [--all-users] [--late] [--] <name of the job> [<more job names>]
+Usage: add-oneshot [--now] [--late] [--user|--all-users|--uid <uid>] [--privileged] [--] <name of the job> [<more job names>]
+or:    add-oneshot --new-users [--all-users] [--late] [--privileged] [--] <name of the job> [<more job names>]
 
 If --now is given, job is run immediately instead of postponing it later
 If instant run fails or if --now is not given, the link is created for later run
@@ -43,6 +43,7 @@ If --all-users is given then the job is ran for all users
 If --new-users is given then the job is ran for each newly created user
 If --uid <uid> is given then that user is used to run the job
 If --late is given then job is run after first boot is over (after init-done)
+If --privileged is given, job is run in privileged group (unless run as root)
 Without --late or --now job is run at the very beginning of the boot or user session
 Job names must follow options and you may use -- to specify files beginning with --
 Job name is given as name of the executable located in /usr/lib/oneshot.d

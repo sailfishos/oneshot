@@ -44,6 +44,9 @@ Requires: systemd
 %{_unitdir}/oneshot-root-late.service
 %{_unitdir}/multi-user.target.wants/oneshot-root.service
 %{_unitdir}/graphical.target.wants/oneshot-root-late.service
+%{_unitdir}/oneshot-user-privileged@.service
+%{_unitdir}/oneshot-user-late-privileged@.service
+%{_unitdir}/user@.service.d/oneshot-user-privileged.conf
 
 %prep
 %setup -q
@@ -69,12 +72,15 @@ install -m 644 macros/* %{buildroot}/etc/rpm/
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/group.d/
 install -d %{buildroot}%{_sysconfdir}/oneshot.d/preinit/
 
+install -d %{buildroot}%{_unitdir}/user@.service.d/
+install -m 644 conf/user@.service.d/* %{buildroot}%{_unitdir}/user@.service.d/
+
 install -d %{buildroot}%{_unitdir}/multi-user.target.wants
 install -d %{buildroot}%{_unitdir}/graphical.target.wants
+install -d %{buildroot}%{_unitdir}/home.mount.wants
 install -d %{buildroot}%{_userunitdir}/pre-user-session.target.wants
 install -d %{buildroot}%{_userunitdir}/post-user-session.target.wants
 ln -sf ../oneshot-root.service %{buildroot}%{_unitdir}/multi-user.target.wants/
 ln -sf ../oneshot-root-late.service %{buildroot}%{_unitdir}/graphical.target.wants/
 ln -sf ../oneshot-user.service %{buildroot}%{_userunitdir}/pre-user-session.target.wants/
 ln -sf ../oneshot-user-late.service %{buildroot}%{_userunitdir}/post-user-session.target.wants/
-

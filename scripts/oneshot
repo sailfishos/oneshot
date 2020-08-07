@@ -1,31 +1,32 @@
 #!/bin/sh
-# Copyright (c) 2012 - 2019 Jolla Ltd.
+# Copyright (c) 2012 - 2020 Jolla Ltd.
 # Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 #
 # Run all oneshot scripts indicated by links and after
 # successful run remove the link
 
 # Define PATH in case we are called in build time (PATH empty or sbin not included)
-if [ -z "$PATH" ] ||
-   [[ "$PATH" != *sbin* ]]; then
+if [ -z "$PATH" ] || echo "$PATH" | grep -q sbin; then
     export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
 fi
 
-[ -z "$USER" ] && export USER=`id -u -n`
-[ -z "$GROUP" ] && export GROUP=`id -g -n`
+[ -z "$USER" ] && export USER=$(id -u -n)
+[ -z "$UID" ] && export UID=$(id -u)
+[ -z "$GROUP" ] && export GROUP=$(id -g -n)
 
 SUBDIR=""
-[ "$1" == "--late" ] && SUBDIR=${SUBDIR}late/
-[ "$GROUP" == "privileged" ] && SUBDIR=${SUBDIR}privileged/
+[ "$1" = "--late" ] && "SUBDIR=${SUBDIR}late/"
+[ "$GROUP" = "privileged" ] && "SUBDIR=${SUBDIR}privileged/"
 
-if [ "$1" == "--mic" ]; then
+if [ "$1" = "--mic" ]; then
     [ -f "/.bootstrap" ] && echo "/.bootstrap exists while running in mic-mode, which is probably not what you want"
     export MIC_RUN=1
-    if [ $UID -eq 0 ]; then
+    if [ "$UID" -eq 0 ]; then
         mkdir -p /var/run/dbus
         dbus-daemon --system
     else
-        export DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --print-address --session --fork)
+        DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --print-address --session --fork)
+        export DBUS_SESSION_BUS_ADDRESS
     fi
 fi
 

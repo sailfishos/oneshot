@@ -15,8 +15,8 @@ fi
 [ -z "$GROUP" ] && export GROUP=$(id -g -n)
 
 SUBDIR=""
-[ "$1" = "--late" ] && "SUBDIR=${SUBDIR}late/"
-[ "$GROUP" = "privileged" ] && "SUBDIR=${SUBDIR}privileged/"
+[ "$1" = "--late" ] && SUBDIR=${SUBDIR}late/
+[ "$GROUP" = "privileged" ] && SUBDIR=${SUBDIR}privileged/
 
 if [ "$1" = "--mic" ]; then
     [ -f "/.bootstrap" ] && echo "/.bootstrap exists while running in mic-mode, which is probably not what you want"

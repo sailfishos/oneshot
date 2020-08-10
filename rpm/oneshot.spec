@@ -4,11 +4,11 @@
 Name: oneshot
 Version: 0.3.1
 Release: 1
-Summary: Hooks run on first start
+Summary: Hooks run on startup
 BuildArch: noarch
 License: GPLv2+
 Source0: %{name}-%{version}.tar.gz
-URL: https://git.merproject.org/mer-core/oneshot
+URL: https://git.sailfishos.org/mer-core/oneshot
 BuildRequires: grep, systemd
 Requires: systemd-user-session-targets
 Requires(pre): glibc-common
@@ -47,6 +47,7 @@ Requires: systemd
 %{_unitdir}/oneshot-user-privileged@.service
 %{_unitdir}/oneshot-user-late-privileged@.service
 %{_unitdir}/user@.service.d/oneshot-user-privileged.conf
+%{_datadir}/user-managerd/remove.d/clean-oneshots.sh
 
 %prep
 %setup -q
@@ -84,3 +85,6 @@ ln -sf ../oneshot-root.service %{buildroot}%{_unitdir}/multi-user.target.wants/
 ln -sf ../oneshot-root-late.service %{buildroot}%{_unitdir}/graphical.target.wants/
 ln -sf ../oneshot-user.service %{buildroot}%{_userunitdir}/pre-user-session.target.wants/
 ln -sf ../oneshot-user-late.service %{buildroot}%{_userunitdir}/post-user-session.target.wants/
+
+install -d %{buildroot}%{_datadir}/user-managerd/remove.d
+install -m 755 helpers/clean-oneshots.sh %{buildroot}%{_datadir}/user-managerd/remove.d/

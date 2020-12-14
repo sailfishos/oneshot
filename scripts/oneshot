@@ -21,13 +21,6 @@ SUBDIR=""
 if [ "$1" = "--mic" ]; then
     [ -f "/.bootstrap" ] && echo "/.bootstrap exists while running in mic-mode, which is probably not what you want"
     export MIC_RUN=1
-    if [ "$UID" -eq 0 ]; then
-        mkdir -p /var/run/dbus
-        dbus-daemon --system
-    else
-        DBUS_SESSION_BUS_ADDRESS=$(dbus-daemon --print-address --session --fork)
-        export DBUS_SESSION_BUS_ADDRESS
-    fi
 fi
 
 set +e

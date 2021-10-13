@@ -2,14 +2,15 @@
 %define _oneshotdir %{_prefix}/lib/oneshot.d
 
 Name: oneshot
-Version: 0.3.1
+Version: 0.6.11
 Release: 1
 Summary: Hooks run on startup
 BuildArch: noarch
 License: GPLv2+
 Source0: %{name}-%{version}.tar.gz
-URL: https://git.sailfishos.org/mer-core/oneshot
-BuildRequires: grep, systemd
+URL: https://github.com/sailfishos/oneshot
+BuildRequires: grep
+BuildRequires: pkgconfig(systemd)
 Requires: systemd-user-session-targets
 Requires(pre): glibc-common
 Requires(pre): shadow-utils

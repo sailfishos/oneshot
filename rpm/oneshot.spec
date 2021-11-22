@@ -29,6 +29,7 @@ Requires: systemd
 
 %files
 %defattr(-,root,root,-)
+%license COPYING
 %config %{_sysconfdir}/rpm/*
 %attr (755, -, -) %{_bindir}/*
 %{_sysconfdir}/oneshot.d/
